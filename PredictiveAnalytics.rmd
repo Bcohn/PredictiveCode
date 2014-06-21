@@ -1,0 +1,126 @@
+# Coursera Machine Learning Assignment
+ 
+## Synopsis
+
+This report is for the summer 2014 Coursera Practice Machine Learning Assignment. For this assignment I use classification and regression trees (CART) and partial least squares (PLS) models to predict weight lifting exercises in a Brazilian exercise dataset. 
+
+The CART models perform significantly better than PLS. CART has approximately 66% accuracy on the test set, while PLS manages only 58%. 
+
+ 
+## Data Processing
+
+### Required Packages
+I use two external pacakges for this project: caret and AppliedPredictiveModeling
+ 
+```{r}
+require(AppliedPredictiveModeling)
+require(caret)
+```
+#Loading and Mainpulating Data
+
+First, I read in the CSV assigned for this report.
+
+
+```{r}
+train <- read.csv("~/Downloads/pml-training.csv")
+
+final_test <- read.csv("~/Downloads/pml-testing.csv")
+
+dim(train)
+dim(final_test)
+table(train$classe)
+table(test$classe)
+class(train$classe)
+
+````
+Next I remove all of the covariates with no variance, and those not found in the testing set.
+
+```{r}
+nzv <- nearZeroVar(train)
+train <- train[, -nzv]
+final_test <- final_test[,-nzv]
+
+naFinal <- which(colSums(is.na(final_test))==20)
+train <- train[, -naFinal]
+final_test <- final_test[,-naFinal]
+
+```
+## Creating Testing and Training Dataframes
+
+Next, I split the data into testing and training datasets. I assign 30% of the data to the testing dataset using "classe" as the outcome variable.
+```{r}
+
+inTrain <- createDataPartition(y = train$classe, p=.7, list=FALSE)
+training <- train[inTrain,]
+testing <- train[-inTrain,]
+nrow(training)
+nrow(testing)
+
+```
+
+### Training
+
+Here I train the models. I specify 10 fold repeated cross validation and I also center and scale the data in preprocessing.
+
+```{r}
+ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 2, classProbs=TRUE)
+
+ 
+fit <- train(classe ~., data=training, method="pls", trControl = ctrl , preProc=c("center","scale"))
+
+cartfit <- train(classe~.,data=training, method = "rpart", trControl=ctrl)
+
+#gbmfit <- train(classe~.,data=training, metod = "gbm", preProc=c("center","scale"))
+
+
+#rffit <- train(classe~.,data=training, method = "rf",prox=TRUE)
+
+```
+I tried GBM and random forests, but could not manage to have them run in a reasonable time.
+
+## Models
+
+The final PLS model just used X as a predictor. It had 58% accuracy.
+
+```{r}
+fit
+fit$finalModel
+```
+
+The final CART model also just used X as a predictor and had 75% accuracy.
+
+```{r}
+cartfit
+cartfit$finalModel
+```
+
+Variable importance is displayed graphically in the plots below.
+
+```{r fig.width = 10, fig.height = 10}
+plot(varImp(fit),top=10)
+plot(varImp(cartfit),top=10)
+```
+### Predictions
+
+The PLS models correctly predict 58% of the training data, while the cart models predict 66% correctly. 
+
+```{r}
+plsresults <- sum(testing$classe==predict(fit, testing, verbose=TRUE))
+
+plsresults
+
+plsresults/length(testing$classe)
+
+cartresults <- sum(testing$classe==predict(cartfit, testing, verbose=TRUE))
+
+cartresults
+
+cartresults/length(testing$classe)
+
+```
+### Conclusion
+
+I am dissapointed in the performance of my models. If I had more time I would like to fit a random forest or GBM to this data.
+
+
+# End
