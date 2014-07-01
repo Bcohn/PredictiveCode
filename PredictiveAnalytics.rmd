@@ -33,7 +33,8 @@ table(test$classe)
 class(train$classe)
 
 ````
-Next I remove all of the covariates with no variance, and those not found in the testing set.
+Next I remove all of the covariates with no variance, and those not found in the testing set. 
+Edit: Thanks to helpful comments from a reviewer, I also remove the variable "X", an index variable.
 
 ```{r}
 nzv <- nearZeroVar(train)
@@ -43,6 +44,8 @@ final_test <- final_test[,-nzv]
 naFinal <- which(colSums(is.na(final_test))==20)
 train <- train[, -naFinal]
 final_test <- final_test[,-naFinal]
+train <- train[,-1]
+final_test<-final_test[,1]
 
 ```
 ## Creating Testing and Training Dataframes
